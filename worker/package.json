@@ -1,0 +1,23 @@
+{
+  "name": "nextpos-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "d1:migrate:local": "wrangler d1 migrations apply nextpos-db --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply nextpos-db --remote"
+  },
+  "dependencies": {
+    "inversify": "^7.0.0",
+    "itty-router": "^5.0.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250410.0",
+    "typescript": "^5.8.0",
+    "wrangler": "^4.14.0"
+  }
+}

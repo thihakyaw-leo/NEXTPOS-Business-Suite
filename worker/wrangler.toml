@@ -1,0 +1,25 @@
+name = "nextpos-worker"
+main = "index.ts"
+compatibility_date = "2026-04-21"
+compatibility_flags = ["nodejs_compat"]
+
+# Store sensitive values with Worker secrets, not in this file:
+# npx wrangler secret put JWT_SECRET
+# npx wrangler secret put ADMIN_USERNAME
+# npx wrangler secret put ADMIN_PASSWORD
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nextpos-db"
+database_id = "7f513501-03ba-405d-aee7-2f4a67b76340"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "nextpos-storage"
+
+[vars]
+ENVIRONMENT = "development"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
