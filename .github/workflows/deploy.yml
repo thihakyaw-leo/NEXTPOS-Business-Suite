@@ -22,9 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Types
-        run: npx wrangler types
-
       - name: Build
         run: npm run build
 
