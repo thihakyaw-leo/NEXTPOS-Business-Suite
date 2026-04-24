@@ -7,8 +7,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "d1:migrate:local": "wrangler d1 migrations apply nextpos-db --local",
-    "d1:migrate:remote": "wrangler d1 migrations apply nextpos-db --remote"
+    "d1:migrate:local": "wrangler d1 migrations apply kt-pos-db --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply kt-pos-db --remote"
   },
   "dependencies": {
     "inversify": "^7.0.0",

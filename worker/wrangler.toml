@@ -38,3 +38,11 @@ migrations_dir = "migrations"
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "kt-pos-storage"
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[observability.traces]
+enabled = true
