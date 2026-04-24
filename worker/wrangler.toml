@@ -1,4 +1,4 @@
-name = "nextpos-business-suite"
+name = "kt-pos-business-suite"
 main = "index.ts"
 compatibility_date = "2026-04-21"
 compatibility_flags = ["nodejs_compat"]
@@ -8,18 +8,33 @@ compatibility_flags = ["nodejs_compat"]
 # npx wrangler secret put ADMIN_USERNAME
 # npx wrangler secret put ADMIN_PASSWORD
 
+[[kv_namespaces]]
+binding = "KV"
+id = "69fcd9401cf148c9ac4ca412ea9b8749" # Placeholder: User must update after 'npx wrangler kv:namespace create KV'
+
 [[d1_databases]]
 binding = "DB"
-database_name = "nextpos-db"
-database_id = "7f513501-03ba-405d-aee7-2f4a67b76340"
+database_name = "kt-pos-db"
+database_id = "81876721-ced3-49cf-9153-dee110f489cd"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "nextpos-storage"
-
-[vars]
-ENVIRONMENT = "development"
+bucket_name = "kt-pos-storage"
 
 [env.production]
 vars = { ENVIRONMENT = "production" }
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "69fcd9401cf148c9ac4ca412ea9b8749"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "kt-pos-db"
+database_id = "81876721-ced3-49cf-9153-dee110f489cd"
+migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "kt-pos-storage"

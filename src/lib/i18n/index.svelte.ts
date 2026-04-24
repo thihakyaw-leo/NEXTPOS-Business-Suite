@@ -1,5 +1,5 @@
 /**
- * NextPOS Internationalisation store.
+ * KT POS Internationalisation store.
  *
  * Uses Svelte 5 runes for reactive, class-based state.
  * Supports English and Myanmar with a single toggle.
@@ -28,14 +28,14 @@ class I18nStore {
     this.locale = l;
     // Persist preference
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('nextpos-locale', l);
+      localStorage.setItem('KT POS-locale', l);
     }
   }
 
   /** Load saved locale from localStorage. */
   loadSaved() {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem('nextpos-locale') as Locale | null;
+      const saved = localStorage.getItem('KT POS-locale') as Locale | null;
       if (saved === 'en' || saved === 'my') {
         this.locale = saved;
       }

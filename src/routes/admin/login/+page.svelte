@@ -52,7 +52,7 @@
 
 <div class="page-shell">
 	<section class="card">
-		<p class="eyebrow">NextPOS Admin</p>
+		<p class="eyebrow">KT POS Admin</p>
 		<h1>Administrator sign in</h1>
 		<p class="lead">This route issues an HTTP-only `admin_token` cookie from the Worker.</p>
 
@@ -86,7 +86,8 @@
 	</section>
 </div>
 
-<style>
+<style lang="postcss">
+    @reference "tailwindcss";
 	:global(body) {
 		margin: 0;
 		font-family: 'Segoe UI', system-ui, sans-serif;

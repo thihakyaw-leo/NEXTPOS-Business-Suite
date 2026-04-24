@@ -6,6 +6,7 @@ import {
   type AdminJwtPayload,
   type IAuthService,
   type ID1Repository,
+  type LoginTenantInput,
   type RegisterTenantInput,
   type RegisterTenantResult,
   type TenantJwtPayload,
@@ -35,6 +36,36 @@ export class AuthService implements IAuthService {
     );
 
     if (existingActivation) {
+      // Re-activate: If already registered, find the tenant and issue a new token
+      const tenant = await this.d1.first<TenantRecord>(
+        `SELECT * FROM tenants WHERE tenant_id = ? AND isdeleted = 0`,
+        [existingActivation.tenant_id],
+      );
+
+      if (tenant) {
+        const features = this.parseFeatures(tenant.enabled_features);
+        const reToken = await this.issueJwt<Omit<TenantJwtPayload, 'iat' | 'exp' | 'jti'>>(
+          {
+            token_type: 'tenant',
+            tenant_id: tenant.tenant_id,
+            plan_type: tenant.plan_type,
+            features,
+            device_fingerprint: input.device_fingerprint.trim(),
+          },
+          TENANT_TOKEN_TTL_SECONDS,
+        );
+
+        return {
+          token: reToken,
+          tenant_id: tenant.tenant_id,
+          plan_type: tenant.plan_type,
+          features,
+          trial_ends_at:
+            tenant.trial_ends_at ??
+            new Date(Date.now() + TENANT_TOKEN_TTL_SECONDS * 1000).toISOString(),
+        };
+      }
+
       return null;
     }
 
@@ -97,6 +128,68 @@ export class AuthService implements IAuthService {
     };
   }
 
+  async loginTenant(input: LoginTenantInput): Promise<RegisterTenantResult | null> {
+    const tenant = await this.d1.first<TenantRecord>(
+      `SELECT * FROM tenants WHERE email = ? AND isdeleted = 0`,
+      [input.email.trim().toLowerCase()],
+    );
+
+    if (!tenant) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    const activation = await this.d1.first<ActivationRecord>(
+      `SELECT * FROM activations
+       WHERE tenant_id = ? AND hardware_id = ? AND isdeleted = 0`,
+      [tenant.tenant_id, input.device_fingerprint.trim()],
+    );
+
+    if (!activation) {
+      const trialEndsAt =
+        tenant.trial_ends_at ??
+        new Date(Date.now() + TENANT_TOKEN_TTL_SECONDS * 1000).toISOString();
+
+      await this.d1.execute(
+        `INSERT INTO activations
+         (tenant_id, hardware_id, activation_key, activated_at, expires_at, last_seen_at, isdeleted, createdate, updatedate)
+         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+        [
+          tenant.tenant_id,
+          input.device_fingerprint.trim(),
+          this.buildActivationKey(),
+          now,
+          trialEndsAt,
+          now,
+          now,
+          now,
+        ],
+      );
+    }
+
+    const features = this.parseFeatures(tenant.enabled_features);
+    const token = await this.issueJwt<Omit<TenantJwtPayload, 'iat' | 'exp' | 'jti'>>(
+      {
+        token_type: 'tenant',
+        tenant_id: tenant.tenant_id,
+        plan_type: tenant.plan_type,
+        features,
+        device_fingerprint: input.device_fingerprint.trim(),
+      },
+      TENANT_TOKEN_TTL_SECONDS,
+    );
+
+    return {
+      token,
+      tenant_id: tenant.tenant_id,
+      plan_type: tenant.plan_type,
+      features,
+      trial_ends_at:
+        tenant.trial_ends_at ??
+        new Date(Date.now() + TENANT_TOKEN_TTL_SECONDS * 1000).toISOString(),
+    };
+  }
+
   async validateTenant(input: ValidateTenantInput): Promise<TenantValidationResult> {
     const claims = await this.verifyTenantToken(input.token);
 
@@ -112,6 +205,20 @@ export class AuthService implements IAuthService {
         status: 'expired',
         reason: 'device_mismatch',
       };
+    }
+
+    const statusKey = `tenant:v1:val:${claims.tenant_id}:${input.device_fingerprint.trim()}`;
+    const cached = await this.env.KV.get<TenantValidationResult>(statusKey, 'json');
+
+    if (cached && cached.status === 'active') {
+      // Background update of last_seen_at in D1 to keep D1 accurate without blocking response
+      const now = new Date().toISOString();
+      this.d1.execute(
+        `UPDATE activations SET last_seen_at = ?, updatedate = ? WHERE tenant_id = ? AND hardware_id = ?`,
+        [now, now, claims.tenant_id, input.device_fingerprint.trim()]
+      ).catch(e => console.error('Failed to sync last_seen_at to D1', e));
+
+      return cached;
     }
 
     const tenant = await this.d1.first<TenantRecord>(
@@ -165,13 +272,18 @@ export class AuthService implements IAuthService {
       [now, now, activation.id],
     );
 
-    return {
+    const result: TenantValidationResult = {
       status: 'active',
       tenant_id: tenant.tenant_id,
       plan_type: tenant.plan_type,
       features: this.parseFeatures(tenant.enabled_features),
       trial_ends_at: tenant.trial_ends_at ?? null,
     };
+
+    // Cache the result for 1 hour to reduce D1 load
+    await this.env.KV.put(statusKey, JSON.stringify(result), { expirationTtl: 3600 });
+
+    return result;
   }
 
   async verifyTenantToken(token: string): Promise<TenantJwtPayload | null> {
@@ -244,7 +356,7 @@ export class AuthService implements IAuthService {
     const signature = await crypto.subtle.sign(
       'HMAC',
       await this.importJwtKey(),
-      encoder.encode(signingInput),
+      encoder.encode(signingInput) as any,
     );
 
     return `${signingInput}.${encodeBase64Url(new Uint8Array(signature))}`;
@@ -263,15 +375,15 @@ export class AuthService implements IAuthService {
     const isValid = await crypto.subtle.verify(
       'HMAC',
       await this.importJwtKey(),
-      decodeBase64Url(encodedSignature),
-      encoder.encode(signingInput),
+      decodeBase64Url(encodedSignature) as any,
+      encoder.encode(signingInput) as any,
     );
 
     if (!isValid) {
       return null;
     }
 
-    const payload = JSON.parse(decoder.decode(decodeBase64Url(encodedPayload))) as T;
+    const payload = JSON.parse(decoder.decode(decodeBase64Url(encodedPayload) as any)) as T;
 
     if (typeof payload.exp === 'number' && payload.exp <= Math.floor(Date.now() / 1000)) {
       return null;
@@ -295,7 +407,7 @@ export class AuthService implements IAuthService {
       .trim()
       .toUpperCase()
       .replace(/[^A-Z0-9]+/g, '')
-      .slice(0, 8) || 'NEXTPOS';
+      .slice(0, 8) || 'KTPOS';
 
     return `${slug}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   }

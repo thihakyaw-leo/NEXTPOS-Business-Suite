@@ -17,7 +17,7 @@
     standalone?: boolean;
   };
 
-  const DISMISS_KEY = 'nextpos-pwa-install-dismissed-at';
+  const DISMISS_KEY = 'KT POS-pwa-install-dismissed-at';
   const DISMISS_WINDOW_MS = 1000 * 60 * 60 * 24 * 3;
 
   let deferredPrompt: DeferredInstallPromptEvent | null = null;
@@ -144,7 +144,7 @@
     <div class="panel-surface pointer-events-auto overflow-hidden border border-teal-300/15 bg-slate-950/88 p-4 shadow-[0_30px_90px_-48px_rgba(45,212,191,0.9)]">
       <div class="flex items-start gap-4">
         <img
-          alt="NextPOS app icon"
+          alt="KT POS app icon"
           class="h-14 w-14 rounded-[1.1rem] border border-white/10"
           height="56"
           src="/pwa/icon-192.png"
@@ -153,7 +153,7 @@
 
         <div class="min-w-0 flex-1">
           <p class="text-xs uppercase tracking-[0.28em] text-teal-200/80">Install App</p>
-          <h3 class="mt-2 text-lg font-semibold text-white">Install NextPOS</h3>
+          <h3 class="mt-2 text-lg font-semibold text-white">Install KT POS</h3>
           <p class="mt-2 text-sm text-slate-300">
             Launch checkout faster from the home screen with offline-ready assets and a full-screen app shell.
           </p>

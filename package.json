@@ -1,5 +1,5 @@
 {
-	"name": "nextpos-business-suite",
+	"name": "kt-pos-business-suite",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -28,11 +28,16 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@babel/runtime": "^7.29.2",
 		"@tailwindcss/vite": "^4.2.4",
 		"@tauri-apps/api": "^2.10.1",
+		"bwip-js": "^4.10.1",
 		"chart.js": "^4.5.1",
 		"dexie": "^4.4.2",
+		"jspdf": "^4.2.1",
+		"jspdf-autotable": "^5.0.7",
 		"svelte-chartjs": "^4.0.1",
-		"tailwindcss": "^4.2.4"
+		"tailwindcss": "^4.2.4",
+		"xlsx": "^0.18.5"
 	}
 }

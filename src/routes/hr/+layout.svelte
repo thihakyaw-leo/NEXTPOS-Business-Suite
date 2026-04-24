@@ -15,7 +15,7 @@
 
 <div class="min-h-screen ink-grid">
   <div class="grid min-h-screen lg:grid-cols-[18rem,1fr]">
-    <aside class="border-b border-white/10 bg-slate-950/65 px-5 py-6 backdrop-blur-2xl lg:border-b-0 lg:border-r">
+    <aside class="border-b border-white/10 bg-slate-950/65 px-5 py-6 backdrop-blur-xl lg:border-b-0 lg:border-r">
       <div class="panel-surface p-5">
         <p class="text-xs uppercase tracking-[0.35em] text-cyan-200/80">Enterprise HR</p>
         <h1 class="mt-3 text-2xl font-bold text-white">{auth.companyName}</h1>

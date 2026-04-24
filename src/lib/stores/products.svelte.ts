@@ -5,7 +5,7 @@
 import { browser } from '$app/environment';
 import type { Product, ProductCategory } from '$lib/types/index';
 import { MOCK_PRODUCTS } from '$lib/api/mock-data';
-import { nextPosDb } from '$lib/db';
+import { KTPOSDb } from '$lib/db';
 import { uid } from '$lib/types/index';
 import { fetchRemoteProducts, upsertRemoteProduct, deleteRemoteProduct } from '$lib/api/products';
 
@@ -22,20 +22,20 @@ class ProductsStore {
       if (navigator.onLine) {
         try {
           const remoteProducts = await fetchRemoteProducts();
-          await nextPosDb.products.clear();
+          await KTPOSDb.products.clear();
           if (remoteProducts.length > 0) {
-            await nextPosDb.products.bulkAdd(remoteProducts);
+            await KTPOSDb.products.bulkAdd(remoteProducts);
           }
         } catch (syncErr) {
           console.warn('Products sync failed (fallback to local cache):', syncErr);
         }
       }
 
-      let dbProducts = await nextPosDb.products.toArray();
+      let dbProducts = await KTPOSDb.products.toArray();
       if (dbProducts.length === 0) {
         // Seed database if empty
-        await nextPosDb.products.bulkAdd(MOCK_PRODUCTS);
-        dbProducts = await nextPosDb.products.toArray();
+        await KTPOSDb.products.bulkAdd(MOCK_PRODUCTS);
+        dbProducts = await KTPOSDb.products.toArray();
       }
       this.all = dbProducts;
       this.initialized = true;
@@ -101,7 +101,7 @@ class ProductsStore {
     };
     
     const syncedProduct = await upsertRemoteProduct(newProduct);
-    await nextPosDb.products.add(syncedProduct);
+    await KTPOSDb.products.add(syncedProduct);
     this.all.push(syncedProduct);
   }
 
@@ -114,7 +114,7 @@ class ProductsStore {
     if (idx >= 0) {
       const updated = { ...this.all[idx], ...updates };
       const syncedProduct = await upsertRemoteProduct(updated);
-      await nextPosDb.products.put(syncedProduct);
+      await KTPOSDb.products.put(syncedProduct);
       this.all[idx] = syncedProduct;
     }
   }
@@ -127,7 +127,7 @@ class ProductsStore {
     const product = this.all.find((p) => p.itemCode === itemCode);
     if (product) {
       await deleteRemoteProduct(itemCode);
-      await nextPosDb.products.delete(product.id);
+      await KTPOSDb.products.delete(product.id);
       this.all = this.all.filter((p) => p.itemCode !== itemCode);
     }
   }
@@ -144,7 +144,7 @@ class ProductsStore {
     const product = this.all.find((p) => p.itemCode === itemCode);
     if (product) {
       const updated = { ...product, stock: Math.max(0, product.stock - qty) };
-      await nextPosDb.products.put(updated);
+      await KTPOSDb.products.put(updated);
       const idx = this.all.findIndex((p) => p.itemCode === itemCode);
       if (idx >= 0) this.all[idx] = updated;
     }
@@ -154,7 +154,7 @@ class ProductsStore {
     const product = this.all.find((p) => p.itemCode === itemCode);
     if (product) {
       const updated = { ...product, stock: Math.max(0, product.stock + qty) };
-      await nextPosDb.products.put(updated);
+      await KTPOSDb.products.put(updated);
       const idx = this.all.findIndex((p) => p.itemCode === itemCode);
       if (idx >= 0) this.all[idx] = updated;
     }

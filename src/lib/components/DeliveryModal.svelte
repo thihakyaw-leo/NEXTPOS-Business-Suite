@@ -20,7 +20,7 @@
   export let open = false;
   export let cartItems: CartItem[] = [];
   export let tenantId = '';
-  export let companyName = 'NextPOS';
+  export let companyName = 'KT POS';
 
   const dispatch = createEventDispatcher();
 
@@ -51,69 +51,62 @@
     openedOnce = false;
   }
 
+  import { deliveryStore } from '$lib/stores/deliveryStore.svelte';
+
   async function estimateDelivery() {
     errorMessage = '';
-
     if (!saleableItems.length) {
       errorMessage = 'Add at least one product before requesting delivery.';
       return;
     }
 
-    if (!pickupAddress.trim() || !dropoffAddress.trim() || !recipientName.trim() || !recipientPhone.trim()) {
-      errorMessage = 'Pickup address, recipient name, recipient phone, and dropoff address are required.';
+    if (!dropoffAddress.trim() || !recipientName.trim() || !recipientPhone.trim()) {
+      errorMessage = 'Recipient name, phone, and dropoff address are required.';
       return;
     }
 
     isLoading = true;
-
     try {
-      const payload = buildEstimatePayload();
-      const response = await fetch('/api/delivery/estimate', {
-        method: 'POST',
-        headers: buildRequestHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const result = (await response.json().catch(() => null)) as
-        | {
-            success?: boolean;
-            error?: string;
-            data?: ApiQuote[];
-          }
-        | null;
-
-      if (!response.ok || !result?.data?.length) {
-        quotes = buildFallbackQuotes();
-        selectedProvider = quotes[0]?.provider ?? null;
-        errorMessage = result?.error
-          ? `${result.error} Showing local estimates instead.`
-          : 'Delivery API unavailable. Showing local estimates instead.';
-        return;
-      }
-
-      quotes = result.data
-        .map((quote) => ({
-          provider: quote.provider,
-          serviceType: quote.service_type,
-          fee: quote.fee,
-          currency: quote.currency,
-          estimatedPickupAt: quote.estimated_pickup_at ?? null,
-          estimatedDropoffAt: quote.estimated_dropoff_at ?? null,
-          distanceM: quote.distance_m ?? null,
-          quoteId: quote.quote_id ?? null,
-          message: quote.message ?? null,
-        }))
-        .sort((left, right) => left.fee - right.fee);
+      // Simulate brief loading for UI feedback
+      await new Promise(r => setTimeout(r, 400));
+      quotes = buildManualQuotes();
       selectedProvider = quotes[0]?.provider ?? null;
-    } catch (error) {
-      quotes = buildFallbackQuotes();
-      selectedProvider = quotes[0]?.provider ?? null;
-      errorMessage =
-        error instanceof Error
-          ? `${error.message} Showing local estimates instead.`
-          : 'Delivery API unavailable. Showing local estimates instead.';
     } finally {
       isLoading = false;
     }
+  }
+
+  function buildManualQuotes(): DeliveryQuote[] {
+    return deliveryStore.active.map(p => ({
+      provider: p.name as any,
+      serviceType: 'MANUAL',
+      fee: p.baseFee,
+      currency: 'Ks',
+      estimatedPickupAt: null,
+      estimatedDropoffAt: null,
+      distanceM: null,
+      message: `Contact: ${p.contact || 'N/A'}`
+    }));
+  }
+
+  function buildRequestHeaders(): Record<string, string> {
+    return buildTenantHeaders(tenantId);
+  }
+
+  function sanitizePhone(value: string): string {
+    const digits = value.replace(/[^\d]/g, '');
+    return digits || '959000000000';
+  }
+
+  function clearSelection() {
+    quotes = [];
+    selectedProvider = null;
+    errorMessage = '';
+    dispatch('clear');
+  }
+
+  function closeModal() {
+    dispatch('close');
   }
 
   function applySelection(quote: DeliveryQuote) {
@@ -129,101 +122,7 @@
       recipientPhone: recipientPhone.trim(),
       note: dropoffNote.trim(),
     };
-
     dispatch('apply', { selection });
-  }
-
-  function closeModal() {
-    dispatch('close');
-  }
-
-  function clearSelection() {
-    quotes = [];
-    selectedProvider = null;
-    errorMessage = '';
-    dispatch('clear');
-  }
-
-  function buildEstimatePayload() {
-    return {
-      tenant_id: tenantId,
-      provider_codes: ['MOCK', 'GRAB', 'MANUAL'],
-      pickup: {
-        name: companyName,
-        phone: sanitizePhone(storePhone),
-        address: pickupAddress.trim(),
-      },
-      dropoff: {
-        name: recipientName.trim(),
-        phone: sanitizePhone(recipientPhone),
-        address: dropoffAddress.trim(),
-        notes: dropoffNote.trim() || undefined,
-      },
-      packages: saleableItems.map((item) => ({
-        name: item.name,
-        description: `${item.quantity} x ${item.name}`,
-        quantity: item.quantity,
-        price: item.price,
-        dimensions: {
-          height: 10,
-          width: 10,
-          depth: 10,
-          weight: 400,
-        },
-      })),
-      order_total: orderSubtotal,
-      distance_km: Math.max(1, Number(distanceKm || 0) || 1),
-      currency: 'MMK',
-    };
-  }
-
-  function buildFallbackQuotes(): DeliveryQuote[] {
-    const distance = Math.max(1, Number(distanceKm || 0) || 1);
-    const itemWeight = packageCount * 100;
-
-    const fallbackQuotes: DeliveryQuote[] = [
-      {
-        provider: 'MANUAL',
-        serviceType: 'MANUAL_DISPATCH',
-        fee: roundCurrency(1000 + distance * 180 + itemWeight * 0.2),
-        currency: 'MMK',
-        estimatedPickupAt: null,
-        estimatedDropoffAt: null,
-        distanceM: Math.round(distance * 1000),
-        message: 'Store-managed dispatch estimate',
-      },
-      {
-        provider: 'MOCK',
-        serviceType: 'DEV_SAME_DAY',
-        fee: roundCurrency(1500 + distance * 450 + packageCount * 120),
-        currency: 'MMK',
-        estimatedPickupAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        estimatedDropoffAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-        distanceM: Math.round(distance * 1000),
-        message: 'Development estimate',
-      },
-      {
-        provider: 'GRAB',
-        serviceType: 'INSTANT',
-        fee: roundCurrency(2200 + distance * 550 + orderSubtotal * 0.0125),
-        currency: 'MMK',
-        estimatedPickupAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
-        estimatedDropoffAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        distanceM: Math.round(distance * 1000),
-        message: 'Fallback estimate while live provider access is unavailable',
-      },
-    ];
-
-    return fallbackQuotes.sort((left, right) => left.fee - right.fee);
-  }
-
-  function buildRequestHeaders(): Record<string, string> {
-    return buildTenantHeaders(tenantId);
-  }
-
-  function sanitizePhone(value: string): string {
-    const digits = value.replace(/[^\d]/g, '');
-    return digits || '959000000000';
   }
 
   function roundCurrency(value: number): number {
@@ -236,7 +135,7 @@
 </script>
 
 {#if open}
-  <div class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/75 p-4 backdrop-blur-sm sm:items-center">
+  <div class="delivery-modal fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/75 p-4 backdrop-blur-sm sm:items-center">
     <div class="panel-surface w-full max-w-4xl p-6">
       <div class="flex flex-col gap-4 border-b border-white/8 pb-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -446,3 +345,27 @@
     </div>
   </div>
 {/if}
+
+<style lang="postcss">
+    @reference "tailwindcss";
+  :global(html:not(.dark) .delivery-modal .text-white),
+  :global(html:not(.dark) .delivery-modal .text-slate-100),
+  :global(html:not(.dark) .delivery-modal .text-slate-200),
+  :global(html:not(.dark) .delivery-modal .text-slate-300) {
+    color: var(--text-primary) !important;
+  }
+
+  :global(html:not(.dark) .delivery-modal .text-slate-400),
+  :global(html:not(.dark) .delivery-modal .text-slate-500) {
+    color: var(--text-secondary) !important;
+  }
+
+  :global(html:not(.dark) .delivery-modal [class*='bg-slate-950/']),
+  :global(html:not(.dark) .delivery-modal [class*='bg-white/[']) {
+    background: var(--bg-elevated) !important;
+  }
+
+  :global(html:not(.dark) .delivery-modal [class*='border-white/']) {
+    border-color: var(--btn-border) !important;
+  }
+</style>

@@ -3,8 +3,8 @@ import type { ActivationState } from '$lib/types/index';
 import { isTauri } from '$lib/platform';
 import { hydrateFeatures, resetFeatures } from '$lib/stores/featureStore.js';
 
-const ACTIVATION_STORAGE_KEY = 'nextpos-activation';
-const LICENSE_STORAGE_KEY = 'nextpos-license';
+const ACTIVATION_STORAGE_KEY = 'KT POS-activation';
+const LICENSE_STORAGE_KEY = 'KT POS-license';
 
 type RegisterTenantResult = {
   token: string;
@@ -68,7 +68,11 @@ class AuthStore {
   }
 
   get companyName(): string {
-    return this.activation.companyName || 'NextPOS';
+    return this.activation.companyName || 'KT POS';
+  }
+
+  get username(): string {
+    return this.activation.email.split('@')[0] || '';
   }
 
   get tenantId(): string {
@@ -139,6 +143,81 @@ class AuthStore {
 
     if (!isValid) {
       throw new Error(this.validationMessage ?? 'Tenant activation could not be validated.');
+    }
+  }
+
+  async activateWithToken(token: string): Promise<void> {
+    if (!browser) {
+      throw new Error('Tenant activation is only available in the browser runtime.');
+    }
+
+    if (!this.activation.hardwareId) {
+      await this.loadHardwareId();
+    }
+
+    // Temporarily set the token and try to validate it
+    const oldToken = this.activation.token;
+    this.activation.token = token.trim();
+
+    const isValid = await this.validateSession();
+
+    if (!isValid) {
+      this.activation.token = oldToken; // Restore old token if invalid
+      throw new Error(this.validationMessage ?? 'The provided activation code is invalid for this device.');
+    }
+
+    this.saveActivation();
+  }
+
+  async loginTenant(input: { email: string }): Promise<void> {
+    if (!browser) {
+      throw new Error(
+        'Tenant activation is only available in the browser runtime.',
+      );
+    }
+
+    if (!this.activation.hardwareId) {
+      await this.loadHardwareId();
+    }
+
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: input.email.trim(),
+        device_fingerprint: this.activation.hardwareId,
+      }),
+    });
+    const result = (await response.json().catch(
+      () => null,
+    )) as RegisterTenantResponse;
+
+    if (!response.ok || !result?.data) {
+      throw new Error(
+        result?.error ?? 'Login failed. Check your email or try registering.',
+      );
+    }
+
+    this.activation.email = input.email.trim();
+    this.activation.tenantId = result.data.tenant_id;
+    this.activation.token = result.data.token;
+    this.activation.planType = result.data.plan_type;
+    this.activation.features = result.data.features;
+    this.activation.expiresAt = result.data.trial_ends_at;
+    this.activation.isActivated = false;
+    this.activation.lastValidatedAt = null;
+    this.validationMessage = null;
+
+    this.saveActivation();
+
+    const isValid = await this.validateSession();
+
+    if (!isValid) {
+      throw new Error(
+        this.validationMessage ?? 'Tenant activation could not be validated.',
+      );
     }
   }
 

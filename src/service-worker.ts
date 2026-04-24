@@ -2,7 +2,7 @@
 
 import { build, files, version } from '$service-worker';
 
-const CACHE_NAME = `nextpos-cache-${version}`;
+const CACHE_NAME = `KT POS-cache-${version}`;
 const ROUTE_SHELL = ['/', '/pos/terminal', '/pos/dashboard'];
 const APP_SHELL = [...new Set([...build, ...files, ...ROUTE_SHELL])];
 

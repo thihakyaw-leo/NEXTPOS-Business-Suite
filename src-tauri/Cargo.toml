@@ -1,8 +1,8 @@
 [package]
-name = "nextpos"
-version = "0.1.0"
-description = "NextPOS Business Suite - Cross-platform POS Application"
-authors = ["NextPOS Team"]
+name = "kt-pos"
+version = "0.0.1"
+description = "KT POS Business Suite - Cross-platform POS Application"
+authors = ["KT POS Team"]
 license = "MIT"
 repository = ""
 edition = "2021"

@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>NextPOS Admin</title>
+	<title>KT POS Admin</title>
 </svelte:head>
 
 <div class="page-shell">
@@ -13,7 +13,8 @@
 	</section>
 </div>
 
-<style>
+<style lang="postcss">
+    @reference "tailwindcss";
 	:global(body) {
 		margin: 0;
 		font-family: 'Segoe UI', system-ui, sans-serif;

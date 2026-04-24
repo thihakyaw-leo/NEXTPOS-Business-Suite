@@ -38,6 +38,7 @@ export function createContainer(env: Env): Container {
   const container = new Container();
 
   container.bind<Env>(TYPES.Env).toConstantValue(env);
+  container.bind<KVNamespace>(TYPES.KVNamespace).toConstantValue(env.KV);
   container.bind<D1Database>(TYPES.D1Database).toConstantValue(env.DB);
   container.bind<R2Bucket>(TYPES.R2Bucket).toConstantValue(env.R2_BUCKET);
 

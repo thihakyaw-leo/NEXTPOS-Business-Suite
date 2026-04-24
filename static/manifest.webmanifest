@@ -1,7 +1,7 @@
 {
   "id": "/pos/terminal",
-  "name": "NextPOS Business Suite",
-  "short_name": "NextPOS",
+  "name": "KT POS Business Suite",
+  "short_name": "KT POS",
   "description": "Offline-ready retail point-of-sale workspace for checkout, dashboard monitoring, and daily store operations.",
   "start_url": "/pos/terminal",
   "scope": "/",

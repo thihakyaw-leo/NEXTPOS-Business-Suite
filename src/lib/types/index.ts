@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript types for NextPOS frontend.
+ * Shared TypeScript types for KT POS frontend.
  */
 
 // ── Product / Inventory ──────────────────────────────────────────────────────
@@ -207,11 +207,12 @@ export interface Toast {
 
 // ── Utility ──────────────────────────────────────────────────────────────────
 
-/** Format a number as MMK currency string. */
+/** Format a number as MMK currency string (Ks). */
 export function formatMMK(amount: number): string {
-  return new Intl.NumberFormat('en-MM', {
+  const formatted = new Intl.NumberFormat('en-MM', {
     maximumFractionDigits: 0,
   }).format(amount);
+  return `${formatted} Ks`;
 }
 
 /** Generate a unique ID. */

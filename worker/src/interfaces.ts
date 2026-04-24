@@ -14,6 +14,7 @@ export const TYPES = {
   IDeliveryProviderFactory: Symbol.for('IDeliveryProviderFactory'),
   MockDeliveryProvider: Symbol.for('MockDeliveryProvider'),
   GrabDeliveryProvider: Symbol.for('GrabDeliveryProvider'),
+  KVNamespace: Symbol.for('KVNamespace'),
   IAuthService: Symbol.for('IAuthService'),
   IFeatureGuard: Symbol.for('IFeatureGuard'),
   IInventoryService: Symbol.for('IInventoryService'),
@@ -178,6 +179,11 @@ export interface RegisterTenantInput {
   device_fingerprint: string;
 }
 
+export interface LoginTenantInput {
+  email: string;
+  device_fingerprint: string;
+}
+
 export interface ValidateTenantInput {
   token: string;
   device_fingerprint: string;
@@ -227,6 +233,7 @@ export interface AdminAuthResult {
 
 export interface IAuthService {
   registerTenant(input: RegisterTenantInput): Promise<RegisterTenantResult | null>;
+  loginTenant(input: LoginTenantInput): Promise<RegisterTenantResult | null>;
   validateTenant(input: ValidateTenantInput): Promise<TenantValidationResult>;
   verifyTenantToken(token: string): Promise<TenantJwtPayload | null>;
   authenticateAdmin(

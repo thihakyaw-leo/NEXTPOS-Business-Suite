@@ -14,7 +14,7 @@ export function readTenantLicense(): TenantLicense | null {
     return null;
   }
 
-  const raw = localStorage.getItem('nextpos-license');
+  const raw = localStorage.getItem('KT POS-license');
 
   if (!raw) {
     return null;

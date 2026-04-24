@@ -63,7 +63,7 @@ const getTenantId = (request: Request): string | null =>
 router.get('/api/health', (_request, env) =>
   json({
     success: true,
-    service: 'nextpos-worker',
+    service: 'nextpos-business-suite',
     environment: env.ENVIRONMENT,
     timestamp: new Date().toISOString(),
   }),
@@ -112,6 +112,31 @@ router.post('/api/auth/register', async (request, env) => {
     },
     { status: 201 },
   );
+});
+
+router.post('/api/auth/login', async (request, env) => {
+  const body = (await request.json().catch(() => ({}))) as any;
+  if (!body.email || !body.device_fingerprint) {
+    return json(
+      { success: false, error: 'Email and device fingerprint are required' },
+      { status: 400 },
+    );
+  }
+
+  const { authService } = getServices(env);
+  const login = await authService.loginTenant({
+    email: body.email,
+    device_fingerprint: body.device_fingerprint,
+  });
+
+  if (!login) {
+    return json(
+      { success: false, error: 'Invalid email or tenant not found' },
+      { status: 404 },
+    );
+  }
+
+  return json({ success: true, data: login });
 });
 
 router.post('/api/auth/validate', async (request, env) => {

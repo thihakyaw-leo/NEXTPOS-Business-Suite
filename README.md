@@ -1,42 +1,46 @@
-# sv
+# KT POS Business Suite
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A premium, offline-ready Enterprise Resource Planning (ERP) and Point of Sale (POS) system built with Svelte 5, Tauri, and Cloudflare.
 
-## Creating a project
+## 🚀 Overview
 
-If you're seeing this, you've probably already done this step. Congrats!
+KT POS is designed for high-performance retail environments, offering a seamless desktop experience with offline synchronization and real-time analytics.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+### Key Features
+- **Smart Terminal**: Fast checkout with barcode support and offline local caching.
+- **Inventory Matrix**: Robust stock tracking with multi-warehouse support.
+- **Financial Engine**: Integrated accounting and automated ledger management.
+- **Relationship Nexus**: Customer and vendor relationship management.
+- **Reporting Hub**: High-density analytics and PDF/Excel export.
 
-To recreate this project with the same configuration:
+## 🛠️ Technology Stack
+- **Frontend**: Svelte 5 (Runes), Tailwind CSS v4, Dexie.js (Offline Storage)
+- **Desktop**: Tauri (Rust backend for Windows/macOS)
+- **Backend**: Cloudflare Workers & D1 Database
+- **Build**: Vite, Rolldown
 
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --types ts --no-install ./
-```
+## 📦 Getting Started
 
-## Developing
+### Local Development
+```bash
+# Install dependencies
+npm install
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+# Start SvelteKit dev server
 npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Start Tauri dev mode (Desktop)
+npm run tauri:dev
 ```
 
-## Building
+### Production Build
+```bash
+# Create desktop installer
+npm run tauri:build
 
-To create a production version of your app:
-
-```sh
+# Build web-only production
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## 🔒 License
+© 2026 KT POS Technologies. All rights reserved.

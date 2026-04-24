@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "NextPOS",
-  "version": "0.1.0",
-  "identifier": "com.nextpos.app",
+  "productName": "KT POS Business Suite",
+  "version": "1.0.0",
+  "identifier": "com.kt-pos.app",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:5173",
@@ -13,14 +13,21 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "NextPOS Business Suite",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 1024,
-        "minHeight": 680,
+        "label": "main",
+        "title": "KT POS Business Suite",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1200,
+        "minHeight": 720,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "hiddenTitle": false,
+        "titleBarStyle": "Visible"
       }
     ],
     "security": {
@@ -36,6 +43,18 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "languages": ["English"],
+        "displayLanguageSelector": false,
+        "installMode": "perMachine"
+      },
+      "wix": null
+    },
+    "publisher": "KT POS Technologies",
+    "copyright": "© 2026 KT POS Technologies. All rights reserved.",
+    "category": "BusinessAndFinance",
+    "resources": []
   }
 }

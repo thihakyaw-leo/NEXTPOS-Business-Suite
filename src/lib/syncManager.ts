@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import {
-  nextPosDb,
+  KTPOSDb,
   type OfflineSaleConflictDetails,
   type OfflineSaleErrorKind,
   type OfflineSalePayload,
@@ -174,7 +174,7 @@ export async function retryOfflineSale(id: number): Promise<void> {
     return;
   }
 
-  const existing = await nextPosDb.offline_sales.get(id);
+  const existing = await KTPOSDb.offline_sales.get(id);
 
   if (!existing?.id) {
     return;
@@ -182,7 +182,7 @@ export async function retryOfflineSale(id: number): Promise<void> {
 
   const now = new Date().toISOString();
 
-  await nextPosDb.offline_sales.update(existing.id, {
+  await KTPOSDb.offline_sales.update(existing.id, {
     status: 'PENDING',
     updatedAt: now,
     lastError: null,
@@ -201,7 +201,7 @@ export async function deleteOfflineSale(id: number): Promise<void> {
     return;
   }
 
-  await nextPosDb.offline_sales.delete(id);
+  await KTPOSDb.offline_sales.delete(id);
   await refreshSyncState();
 }
 
@@ -232,7 +232,7 @@ async function performSyncPendingSales(): Promise<void> {
   }));
 
   try {
-    const pendingSales = await nextPosDb.offline_sales.where('status').equals('PENDING').sortBy('queuedAt');
+    const pendingSales = await KTPOSDb.offline_sales.where('status').equals('PENDING').sortBy('queuedAt');
 
     for (const record of pendingSales) {
       const attempt = await sendSaleToWorker(record.tenantId, record.payload);
@@ -425,12 +425,12 @@ async function upsertOfflineSale(
   },
 ): Promise<OfflineSaleRecord> {
   const now = new Date().toISOString();
-  const existing = await nextPosDb.offline_sales.where('saleNumber').equals(input.saleNumber).first();
+  const existing = await KTPOSDb.offline_sales.where('saleNumber').equals(input.saleNumber).first();
 
   if (existing?.id) {
     const retryCount = options.attempted ? existing.retryCount + 1 : existing.retryCount;
 
-    await nextPosDb.offline_sales.update(existing.id, {
+    await KTPOSDb.offline_sales.update(existing.id, {
       tenantId: input.tenantId,
       payload: input.payload,
       status: options.status,
@@ -445,7 +445,7 @@ async function upsertOfflineSale(
       syncedAt: options.status === 'SYNCED' ? now : existing.syncedAt ?? null,
     });
 
-    const updated = await nextPosDb.offline_sales.get(existing.id);
+    const updated = await KTPOSDb.offline_sales.get(existing.id);
     await refreshSyncState();
 
     if (!updated) {
@@ -455,7 +455,7 @@ async function upsertOfflineSale(
     return updated;
   }
 
-  const id = await nextPosDb.offline_sales.add({
+  const id = await KTPOSDb.offline_sales.add({
     queueId: buildQueueId(input.saleNumber),
     saleNumber: input.saleNumber,
     tenantId: input.tenantId,
@@ -473,7 +473,7 @@ async function upsertOfflineSale(
     lastAttemptAt: options.attempted ? now : null,
     syncedAt: options.status === 'SYNCED' ? now : null,
   });
-  const created = await nextPosDb.offline_sales.get(id);
+  const created = await KTPOSDb.offline_sales.get(id);
 
   await refreshSyncState();
 
@@ -485,7 +485,7 @@ async function upsertOfflineSale(
 }
 
 async function markSaleSynced(saleNumber: string): Promise<void> {
-  const existing = await nextPosDb.offline_sales.where('saleNumber').equals(saleNumber).first();
+  const existing = await KTPOSDb.offline_sales.where('saleNumber').equals(saleNumber).first();
 
   if (!existing?.id) {
     await refreshSyncState();
@@ -494,7 +494,7 @@ async function markSaleSynced(saleNumber: string): Promise<void> {
 
   const now = new Date().toISOString();
 
-  await nextPosDb.offline_sales.update(existing.id, {
+  await KTPOSDb.offline_sales.update(existing.id, {
     status: 'SYNCED',
     updatedAt: now,
     syncedAt: now,
@@ -515,8 +515,8 @@ async function refreshSyncState(): Promise<void> {
   }
 
   const [pendingCount, conflicts] = await Promise.all([
-    nextPosDb.offline_sales.where('status').equals('PENDING').count(),
-    nextPosDb.offline_sales.where('status').equals('CONFLICT').sortBy('updatedAt'),
+    KTPOSDb.offline_sales.where('status').equals('PENDING').count(),
+    KTPOSDb.offline_sales.where('status').equals('CONFLICT').sortBy('updatedAt'),
   ]);
 
   syncState.update((state) => ({

@@ -1,4 +1,5 @@
 export interface Env {
+  KV: KVNamespace;
   DB: D1Database;
   R2_BUCKET: R2Bucket;
   ENVIRONMENT: string;

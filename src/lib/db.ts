@@ -77,12 +77,12 @@ export interface OfflineSaleRecord {
   syncedAt?: string | null;
 }
 
-class NextPosDexie extends Dexie {
+class KTPOSDexie extends Dexie {
   offline_sales!: EntityTable<OfflineSaleRecord, 'id'>;
   products!: EntityTable<Product, 'id'>;
 
   constructor() {
-    super('nextpos-offline-db');
+    super('KT POS-offline-db');
 
     this.version(1).stores({
       offline_sales: '++id, &saleNumber, tenantId, status, createdAt, updatedAt, [tenantId+status]',
@@ -135,4 +135,4 @@ function buildQueueId(saleNumber: string): string {
   return `offline-sale-${saleNumber}-${Date.now().toString(36)}`;
 }
 
-export const nextPosDb = new NextPosDexie();
+export const KTPOSDb = new KTPOSDexie();

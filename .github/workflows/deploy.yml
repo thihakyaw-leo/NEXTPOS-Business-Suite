@@ -30,7 +30,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy .svelte-kit/cloudflare --project-name=nextpos-business-suite
+          command: pages deploy .svelte-kit/cloudflare --project-name=kt-pos-business-suite --commit-dirty=true
 
   deploy-worker:
     runs-on: ubuntu-latest
@@ -56,4 +56,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
-          command: deploy
+          command: deploy --env production
