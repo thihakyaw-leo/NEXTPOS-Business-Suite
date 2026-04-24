@@ -14,11 +14,11 @@ export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), 'VITE_');
 
 	// Determine the API base:
-	//   - Tauri: use env override if provided, otherwise the hardcoded Worker URL.
-	//   - Web:   always empty (Cloudflare Pages routes /api to the Worker natively).
-	const workerUrl = isTauriBuild
-		? (env['VITE_WORKER_URL'] || process.env['VITE_WORKER_URL'] || TAURI_DEFAULT_WORKER_URL)
-		: '';
+	//   - Development: always empty (Vite server.proxy routes /api to the local Worker port 8787).
+	//   - Production:  absolute Worker URL (Cloudflare Pages deploy and Tauri builds both need this because they are separate from the backend).
+	const workerUrl = mode === 'development'
+		? ''
+		: (env['VITE_WORKER_URL'] || process.env['VITE_WORKER_URL'] || TAURI_DEFAULT_WORKER_URL);
 
 	return {
 		plugins: [tailwindcss(), sveltekit()],
