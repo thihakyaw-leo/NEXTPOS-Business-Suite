@@ -6,6 +6,14 @@ import { hydrateFeatures, resetFeatures } from '$lib/stores/featureStore.js';
 const ACTIVATION_STORAGE_KEY = 'KT POS-activation';
 const LICENSE_STORAGE_KEY = 'KT POS-license';
 
+// In the Tauri desktop build the frontend is served from a tauri:// origin,
+// so relative /api paths don't reach the Cloudflare Worker. VITE_WORKER_URL
+// is baked in at build time: empty string for web (relative paths work fine),
+// absolute Worker URL for Tauri (e.g. 'https://kt-pos…workers.dev').
+const WORKER_BASE: string = (import.meta.env.VITE_WORKER_URL as string | undefined) ?? '';
+
+const apiUrl = (apiPath: string): string => `${WORKER_BASE}${apiPath}`;
+
 type RegisterTenantResult = {
   token: string;
   tenant_id: string;
@@ -109,7 +117,7 @@ class AuthStore {
       await this.loadHardwareId();
     }
 
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(apiUrl('/api/auth/register'), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -180,7 +188,7 @@ class AuthStore {
       await this.loadHardwareId();
     }
 
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(apiUrl('/api/auth/login'), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -235,7 +243,7 @@ class AuthStore {
     }
 
     try {
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch(apiUrl('/api/auth/validate'), {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
